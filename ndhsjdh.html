@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сюрприз 🎉</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: linear-gradient(45deg, #ff9a9e, #fad0c4);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        #startBtn, #copyBtn, #message {
+            font-size: 20px;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            background-color: #ff4081;
+            color: white;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        #countdown {
+            font-size: 30px;
+            font-weight: bold;
+            margin-top: 20px;
+            cursor: pointer; /* Делаем текст кликабельным */
+        }
+        #message, #copyBtn {
+            display: none;
+        }
+        #coords {
+            font-size: 18px;
+            color: #333;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="welcomeText">У меня для тебя сюрприз! 🎁</h1>
+    <button id="startBtn">Нажми и жди 5 минут</button>
+    <div id="countdown"></div>
+    <div id="message">
+        🎉 С Днём Рождения! 🎂🎈 Ты супер! 💖  
+        <div id="coords">Определяем твоё местоположение...</div>
+        <button id="copyBtn">Скопировать координаты</button>
+    </div>
+
+    <script>
+        // Проверяем, заходил ли уже человек
+        let visited = localStorage.getItem("visited");
+
+        if (visited) {
+            document.body.innerHTML = "<h1>Вы уже заходили! 🚫</h1>";
+        } else {
+            let timeLeft = 5 * 60; // 5 минут в секундах
+            let countdownElement = document.getElementById("countdown");
+            let messageElement = document.getElementById("message");
+            let button = document.getElementById("startBtn");
+
+            // Функция обновления таймера
+            function updateCountdown() {
+                let minutes = Math.floor(timeLeft / 60);
+                let seconds = timeLeft % 60;
+                countdownElement.textContent = `Ждём... ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+
+                if (timeLeft <= 0) {
+                    countdownElement.style.display = "none";
+                    messageElement.style.display = "block"; // Показываем поздравление
+                    showLocation(); // Показываем координаты
+                } else {
+                    timeLeft--;
+                    setTimeout(updateCountdown, 1000);
+                }
+            }
+
+            // Функция скипать таймер при 10 быстрых нажатиях
+            let clickCount = 0;
+            countdownElement.addEventListener("click", function() {
+                clickCount++;
+                if (clickCount >= 10) {
+                    timeLeft = 0; // Сбрасываем таймер
+                    updateCountdown(); // Обновляем таймер сразу
+                }
+            });
+
+            // Функция для старта таймера
+            button.addEventListener("click", function() {
+                button.style.display = "none"; // Скрываем кнопку
+                updateCountdown(); // Запускаем таймер
+            });
+
+            // Функция определения геолокации
+            function showLocation() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(position => {
+                        let lat = position.coords.latitude;
+                        let lon = position.coords.longitude;
+                        let coordsText = `📍 Твои координаты:\nШирота: ${lat}\nДолгота: ${lon}`;
+
+                        document.getElementById("coords").innerHTML = coordsText.replace(/\n/g, "<br>");
+                        document.getElementById("copyBtn").style.display = "block";
+
+                        // Запоминаем, что человек уже заходил (локально)
+                        localStorage.setItem("visited", "true");
+                    }, () => {
+                        document.getElementById("coords").innerHTML = "Не удалось получить местоположение 😢";
+                    });
+                } else {
+                    document.getElementById("coords").innerHTML = "Геолокация не поддерживается в твоём браузере!";
+                }
+            }
+
+            // Функция копирования координат
+            document.getElementById("copyBtn").addEventListener("click", function() {
+                let coordsText = document.getElementById("coords").innerText;
+                navigator.clipboard.writeText(coordsText).then(() => {
+                    alert("📍 Координаты скопированы!");
+                });
+            });
+        }
+    </script>
+</body>
+</html>
